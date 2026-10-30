@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container mt-4 mb-5">
+    <div class="card mx-auto shadow-sm border" style="max-width: 880px;">
+        <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
+            <div>
+                <h4 class="mb-0 fw-bold">Complaint #{{ complaint.id }}</h4>
+                <small class="text-muted">Registered civic complaint record | Department: {{ complaint.department }}</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% set d_info = get_deadline_info(complaint) %}
+                <span class="badge {{ d_info.badge_class }} fs-6">{{ d_info.label }}</span>
+
+                {% if complaint.status == 'Resolved' %}
+                    <span class="badge bg-success fs-6">Resolved</span>
+                {% elif complaint.status == 'In Progress' %}
+                    <span class="badge bg-primary fs-6">In Progress</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark fs-6">Pending</span>
+                {% endif %}
+
+                {% if complaint.is_escalated %}
+                    <span class="badge bg-danger fs-6">Escalated</span>
+                {% endif %}
+
+                <a href="/complaint/{{ complaint.id }}/report" class="btn btn-outline-dark btn-sm fw-semibold ms-2">
+                    📄 Official Report
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+
+            <!-- OVERDUE ALERT BANNER -->
+            {% if d_info.is_overdue %}
+                <div class="alert alert-danger py-3 px-3 mb-4 d-flex justify-content-between align-items-center shadow-xs">
+                    <div>
+                        <h6 class="alert-heading fw-bold mb-1">⚠️ Resolution Target Overdue</h6>
+                        <p class="mb-0 small">This complaint has exceeded its target resolution deadline by <strong>{{ d_info.days_diff|abs }} days</strong>. Department authorities are monitoring resolution progress.</p>
+                    </div>
+                    <a href="/complaint/{{ complaint.id }}/report" class="btn btn-danger btn-sm text-nowrap fw-semibold">
+                        Download Overdue Report
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- LATEST DELAY EXPLANATION BANNER (IF RECORDED) -->
+            {% if latest_delay %}
+                <div class="alert alert-warning py-3 px-3 mb-4 border-warning shadow-xs">
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="fs-5 me-2">⏳</span>
+                        <h6 class="alert-heading fw-bold mb-0 text-dark">Official Department Delay Explanation</h6>
+                        <span class="badge text-bg-warning text-dark ms-auto small">Updated: {{ latest_delay.created_at.strftime('%d-%m-%Y') }}</span>
+                    </div>
+                    <p class="mb-1 text-dark">
+                        "Your complaint has been delayed because <strong>{{ latest_delay.delay_reason }}</strong>. The revised estimated completion date is <strong>{{ latest_delay.revised_estimated_date.strftime('%d %B %Y') }}</strong>."
+                    </p>
+                    <div class="text-muted small">Updated by authorized officer: {{ latest_delay.officer_name or 'Department Authority' }}</div>
+                </div>
+            {% endif %}
+
+            <!-- SUPERVISOR REVIEW / ESCALATION NOTICE -->
+            {% if complaint.is_escalated %}
+                <div class="alert alert-secondary py-2 px-3 mb-4 border-danger border-start border-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-danger">🚨 Escalated to {{ complaint.escalation_level or 'Supervisor Review' }}</strong>
+                            {% if latest_escalation %}
+                                <div class="small text-muted">Reason: {{ latest_escalation.reason }} (Review state: <strong>{{ latest_escalation.review_state }}</strong>)</div>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-danger">Under Senior Review</span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- TARGET DEADLINES CARD -->
+            <div class="card mb-4 border bg-light">
+                <div class="card-body p-3">
+                    <div class="row g-2 align-items-center text-center text-sm-start">
+                        <div class="col-sm-4 border-end-sm">
+                            <span class="text-muted small d-block">Original Resolution Target:</span>
+                            <strong class="text-dark">
+                                {{ complaint.original_estimated_date.strftime('%d-%m-%Y') if complaint.original_estimated_date else 'Not yet estimated' }}
+                            </strong>
+                        </div>
+                        <div class="col-sm-4 border-end-sm">
+                            <span class="text-muted small d-block">Current Target Deadline:</span>
+                            <strong class="{% if d_info.is_overdue %}text-danger{% else %}text-primary{% endif %}">
+                                {{ complaint.current_estimated_date.strftime('%d-%m-%Y') if complaint.current_estimated_date else 'Not yet estimated' }}
+                            </strong>
+                        </div>
+                        <div class="col-sm-4">
+                            <span class="text-muted small d-block">Timeline Status:</span>
+                            <span class="badge {{ d_info.badge_class }}">{{ d_info.label }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DELAY REVISION HISTORY TABLE (IF APPLICABLE) -->
+            {% if delays and delays|length > 0 %}
+                <div class="card mb-4 border shadow-xs">
+                    <div class="card-header bg-light py-2">
+                        <span class="fw-bold small text-uppercase text-secondary">
+                            📋 Official Deadline Revision & Delay History
+                        </span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0" style="font-size: 13px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Update Date</th>
+                                        <th>Previous Target</th>
+                                        <th>Revised Target</th>
+                                        <th>Reason for Delay</th>
+                                        <th>Authorized Officer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for d in delays %}
+                                        <tr>
+                                            <td class="ps-3">{{ d.created_at.strftime('%d-%m-%Y %I:%M %p') if d.created_at else 'N/A' }}</td>
+                                            <td>{{ d.previous_estimated_date.strftime('%d-%m-%Y') if d.previous_estimated_date else 'N/A' }}</td>
+                                            <td><strong class="text-primary">{{ d.revised_estimated_date.strftime('%d-%m-%Y') }}</strong></td>
+                                            <td style="white-space: pre-wrap;">{{ d.delay_reason }}</td>
+                                            <td>{{ d.officer_name or 'N/A' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- WORK PROGRESS AND REPAIR EVIDENCE SECTION -->
+            <div class="card border-primary mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white py-2">
+                    <h5 class="mb-0 fw-bold">🛠️ Work Progress and Repair Evidence</h5>
+                </div>
+                <div class="card-body p-3 p-md-4">
+
+                    <!-- ASSIGNED WORKER INFORMATION -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2">Assigned Field Worker</h6>
+                        {% if assigned_worker %}
+                            <div class="p-3 bg-light rounded border">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h5 class="fw-bold mb-1">👷 {{ assigned_worker.worker_name }}</h5>
+                                        <div class="small text-muted">
+                                            Worker ID: <strong>#{{ assigned_worker.worker_id }}</strong> | Department: {{ assigned_worker.worker_dprtmnt }}
+                                        </div>
+                                        <div class="small text-muted">
+                                            Assigned Service Area Pincode: <span class="badge text-bg-secondary">{{ assigned_worker.pincode }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 text-md-end mt-2 mt-md-0">
+                                        {% if complaint.assigned_at %}
+                                            <small class="text-muted d-block">Assigned On:</small>
+                                            <span class="small fw-semibold">{{ complaint.assigned_at.strftime('%d-%m-%Y at %I:%M %p') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary mb-0 small">
+                                ℹ️ Worker assignment pending. A local department officer will assign a field technician to this complaint.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- REPAIR PROGRESS TIMELINE & NOTES -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2">Repair Progress Timeline</h6>
+                        <div class="row g-2 small">
+                            <div class="col-sm-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <span class="text-muted d-block">Complaint Registered:</span>
+                                    <strong>{{ complaint.date_created.strftime('%d-%m-%Y %I:%M %p') if complaint.date_created else 'N/A' }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <span class="text-muted d-block">Work Started:</span>
+                                    <strong>
+                                        {% if complaint.worker_started_at %}
+                                            {{ complaint.worker_started_at.strftime('%d-%m-%Y %I:%M %p') }}
+                                        {% elif complaint.resolved_at or complaint.status == 'Resolved' %}
+                                            <span class="text-muted fw-normal">Not recorded</span>
+                                        {% elif complaint.status == 'In Progress' %}
+                                            <span class="text-primary fw-normal">In progress</span>
+                                        {% else %}
+                                            <span class="text-muted fw-normal">Awaiting worker start</span>
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <span class="text-muted d-block">Work Resolved:</span>
+                                    <strong>
+                                        {% if complaint.resolved_at %}
+                                            <span class="text-success">{{ complaint.resolved_at.strftime('%d-%m-%Y %I:%M %p') }}</span>
+                                        {% elif complaint.status == 'Resolved' %}
+                                            <span class="text-success fw-normal">Resolved</span>
+                                        {% else %}
+                                            <span class="text-muted fw-normal">Pending completion</span>
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if complaint.resolution_notes %}
+                            <div class="mt-3 card border-success-subtle shadow-xs">
+                                <div class="card-header bg-success-subtle bg-opacity-25 text-success-emphasis py-2 px-3 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold small text-uppercase">
+                                        📝 Worker's Completion Note
+                                    </span>
+                                    {% if complaint.resolved_at %}
+                                        <span class="small text-muted">
+                                            Submitted: {{ complaint.resolved_at.strftime('%d-%m-%Y at %I:%M %p') }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body py-2 px-3 bg-white">
+                                    <div class="p-2 rounded bg-light border text-dark" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">{{ complaint.resolution_notes }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- BEFORE AND AFTER PHOTO EVIDENCE COMPARISON -->
+                    <div>
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2">Before & After Repair Proof</h6>
+                        <div class="row g-3">
+                            <!-- BEFORE REPAIR PHOTO -->
+                            <div class="col-md-6">
+                                <div class="card h-100 border">
+                                    <div class="card-header bg-light py-2 small fw-bold text-secondary">
+                                        BEFORE REPAIR (Reported Issue)
+                                    </div>
+                                    <div class="card-body text-center p-2">
+                                        {% if complaint.image %}
+                                            <img src="{{ url_for('static', filename='uploads/' + complaint.image) }}" alt="Before Repair Evidence" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
+                                        {% else %}
+                                            <div class="p-4 text-muted small">No photo evidence was attached when filing the complaint.</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer bg-white text-muted small py-1 text-center">
+                                        Submitted by Citizen
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AFTER REPAIR PHOTO -->
+                            <div class="col-md-6">
+                                <div class="card h-100 border border-success">
+                                    <div class="card-header bg-success text-white py-2 small fw-bold">
+                                        AFTER REPAIR (Completed Work Proof)
+                                    </div>
+                                    <div class="card-body text-center p-2">
+                                        {% if complaint.after_image %}
+                                            <img src="{{ url_for('static', filename='uploads/' + complaint.after_image) }}" alt="After Repair Proof" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
+                                        {% else %}
+                                            <div class="p-4 text-muted small">
+                                                <div class="mb-2">📷</div>
+                                                Repair evidence has not been uploaded yet. The assigned field worker will upload photo proof upon job completion.
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer bg-white text-muted small py-1 text-center">
+                                        {% if complaint.after_image %}
+                                            <span class="text-success fw-semibold">✓ Verified Worker Completion Proof</span>
+                                        {% else %}
+                                            Pending Completion
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- COMPLAINT SPECIFICS -->
+            <h5 class="fw-bold mb-3">Complaint Details</h5>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Department:</div>
+                <div class="col-sm-8"><span class="badge bg-secondary">{{ complaint.department }}</span></div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Issue Category:</div>
+                <div class="col-sm-8 fw-semibold">{{ complaint.complaint_category }}</div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Location Pincode:</div>
+                <div class="col-sm-8">
+                    {% if complaint.pincode %}
+                        <span class="badge text-bg-light border fs-6">{{ complaint.pincode }}</span>
+                    {% else %}
+                        <span class="text-muted">Not specified</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Area / Locality:</div>
+                <div class="col-sm-8">{{ complaint.area }}</div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Landmark:</div>
+                <div class="col-sm-8">{{ complaint.landmark }}</div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-sm-4 text-muted fw-bold">Detailed Address:</div>
+                <div class="col-sm-8">{{ complaint.address }}</div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-sm-4 text-muted fw-bold">Problem Description:</div>
+                <div class="col-sm-8 p-3 bg-light rounded">{{ complaint.description }}</div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <a href="/track" class="btn btn-outline-secondary">← Back to Tracking</a>
+                <div class="d-flex gap-2">
+                    <a href="/complaint/{{ complaint.id }}/report" class="btn btn-outline-dark fw-semibold">
+                        📄 Printable Report / PDF
+                    </a>
+                    <a href="/complaint" class="btn btn-primary">File Another Complaint</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock body %}

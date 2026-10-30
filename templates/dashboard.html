@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<div class="container mt-4 mb-5">
+    <div class="p-4 p-md-5 mb-4 rounded text-bg-light border shadow-sm">
+        <h2 class="display-6 fw-bold">Welcome, {{ name }}! 👋</h2>
+        <p class="lead mb-2">NIVARAN Civic Complaint Management & Grievance Redressal</p>
+        <div class="d-flex flex-wrap gap-2 align-items-center text-muted small">
+            <span>Registered Residential Area: <strong class="badge text-bg-primary fs-6">{{ session.get('pincode') or 'Not Registered' }}</strong></span>
+            <span class="ms-md-3">Status: <span class="badge text-bg-success">Active Citizen</span></span>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <!-- File Complaint Card -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border text-center p-3">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="card-title mb-2">📝 File Complaint</h4>
+                        <p class="card-text text-muted small">Report water leakages, power cuts, potholes, or civic issues in your area.</p>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/complaint" class="btn btn-primary w-100 fw-semibold">
+                            File Complaint
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track Complaint Card -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border text-center p-3">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="card-title mb-2">🔍 Track Complaints</h4>
+                        <p class="card-text text-muted small">Check real-time resolution deadlines, worker progress, and download official reports.</p>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/track" class="btn btn-success w-100 fw-semibold">
+                            Track Status & Deadlines
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Notices Card -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border text-center p-3 border-warning">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="card-title mb-2 text-dark">📢 Area Notices & Alerts</h4>
+                        <p class="card-text text-muted small">View maintenance schedules, supply disruptions, and announcements for your pincode.</p>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/notices" class="btn btn-warning w-100 fw-semibold text-dark">
+                            View Area Notices
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock body %}

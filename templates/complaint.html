@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container mt-4 mb-5" style="max-width: 720px;">
+    <div class="card shadow-sm border p-4">
+        <h2 class="text-center fw-bold text-decoration-underline mb-4">
+            Complaint Registration
+        </h2>
+
+        <form action="/complaint" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="department" class="form-label fw-bold">Department</label>
+                <select class="form-select" id="department" name="department" required>
+                    <option value="" selected disabled>Choose Department</option>
+                    <option value="Water Department">Water Department</option>
+                    <option value="Electricity Department">Electricity Department</option>
+                    <option value="Road Department">Road Department</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="complaint_category" class="form-label fw-bold">Issue Category</label>
+                <select class="form-select" id="complaint_category" name="complaint_category" required>
+                    <option value="" selected disabled>Select Department First</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="pincode" class="form-label fw-bold">Complaint-Location Pincode</label>
+                <input class="form-control" type="text" id="pincode" name="pincode" pattern="[0-9]{6}" maxlength="6" inputmode="numeric" value="{{ default_pincode or session.get('pincode') or '' }}" placeholder="Enter 6-digit location pincode" required>
+                <div class="form-text">Pre-filled with your residential pincode. Change this if the issue occurred in a different area.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="area" class="form-label fw-bold">Area / Locality</label>
+                <input class="form-control" type="text" placeholder="e.g. Sector 4, MG Road" id="area" name="area" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="landmark" class="form-label fw-bold">Landmark</label>
+                <input class="form-control" type="text" placeholder="e.g. Near City Bank / Opposite Metro Station" id="landmark" name="landmark" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="address" class="form-label fw-bold">Specific Address / Details</label>
+                <textarea class="form-control" rows="2" placeholder="Provide complete street or address details" id="address" name="address" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label fw-bold">Problem Description</label>
+                <textarea class="form-control" rows="3" placeholder="Describe the civic issue in detail" id="description" name="description" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="image" class="form-label fw-bold">
+                    Upload Photo Evidence <span class="text-muted fw-normal">(Optional, max 5 MB)</span>
+                </label>
+                <input class="form-control" type="file" id="image" name="image" accept="image/png, image/jpeg, image/jpg, image/webp">
+                <div class="form-text">Supported formats: PNG, JPG, JPEG, WEBP.</div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit"
+                    class="btn w-100 fw-bold text-white py-2"
+                    style="background-color: orange;">
+                    Submit Complaint
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='complaint.js') }}"></script>
+{% endblock body %}

@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+env/
+venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Database and backups
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Private uploaded complaint evidence
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Temporary files
+tempCodeRunnerFile.py
+*.log
+
+# Local backup and migration utility
+app.py.before_render_backup
+migrate_to_postgres.py
+
+# Local backup and migration utility
+app.py.before_render_backup
+migrate_to_postgres.py

@@ -1,0 +1,106 @@
+{% extends 'gov_base.html' %}
+
+{% block body %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="fw-bold mb-1">Public Notices Management</h2>
+            <p class="text-muted mb-0">
+                Department: <span class="badge bg-secondary">{{ session.get('emp_department') }}</span> | Service Area: <span class="badge bg-primary">{{ session.get('emp_pincode') }}</span>
+            </p>
+        </div>
+        <div>
+            <a href="/gov-notices/create" class="btn btn-primary fw-semibold">+ Create New Notice</a>
+        </div>
+    </div>
+
+    <!-- Notices Table -->
+    <div class="card shadow-sm border mt-3">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Published & Draft Notices for Pincode {{ session.get('emp_pincode') }}</h5>
+            <span class="badge text-bg-light border">Total: {{ notices|length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Notice Title</th>
+                            <th>Target Area / Locality</th>
+                            <th>Effective State</th>
+                            <th>Scheduled Window</th>
+                            <th>Published On</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notice in notices %}
+                            {% set effective_status = notice.get_effective_status() %}
+                            <tr>
+                                <td class="ps-3 fw-bold">#{{ notice.id }}</td>
+                                <td>
+                                    <strong>{{ notice.title }}</strong>
+                                    <div class="small text-muted text-truncate" style="max-width: 280px;">{{ notice.description }}</div>
+                                </td>
+                                <td>
+                                    {{ notice.pincode }}
+                                    {% if notice.affected_locality %}
+                                        <span class="badge text-bg-light border ms-1">{{ notice.affected_locality }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if effective_status == 'active' %}
+                                        <span class="badge bg-danger">Active Alert</span>
+                                    {% elif effective_status == 'upcoming' %}
+                                        <span class="badge bg-info text-dark">Upcoming</span>
+                                    {% elif effective_status == 'expired' %}
+                                        <span class="badge bg-secondary">Expired</span>
+                                    {% elif effective_status == 'cancelled' %}
+                                        <span class="badge bg-dark">Cancelled</span>
+                                    {% else %}
+                                        <span class="badge bg-light border text-dark">{{ notice.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {% if notice.scheduled_start %}
+                                        <div><strong>Start:</strong> {{ notice.scheduled_start.strftime('%d-%m-%Y %I:%M %p') }}</div>
+                                    {% endif %}
+                                    {% if notice.scheduled_end %}
+                                        <div><strong>End:</strong> {{ notice.scheduled_end.strftime('%d-%m-%Y %I:%M %p') }}</div>
+                                    {% endif %}
+                                    {% if not notice.scheduled_start and not notice.scheduled_end %}
+                                        <span class="text-muted">Immediate</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-muted">
+                                    {{ notice.created_at.strftime('%d-%m-%Y') if notice.created_at else 'N/A' }}
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a href="/gov-notices/{{ notice.id }}/edit" class="btn btn-outline-primary btn-sm me-1">Edit</a>
+                                    {% if notice.status == 'published' %}
+                                        <form action="/gov-notices/{{ notice.id }}/status" method="POST" class="d-inline">
+                                            <input type="hidden" name="action" value="expire">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Expire this public notice now?');">Expire</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <h6>No civic notices published for your department and service area.</h6>
+                                    <p class="small mb-3">Click "+ Create New Notice" to broadcast maintenance interruptions or announcements to citizens in your area.</p>
+                                    <a href="/gov-notices/create" class="btn btn-primary btn-sm">+ Create Notice Now</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock body %}

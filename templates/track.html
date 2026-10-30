@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-decoration-underline mb-1">Track My Complaints</h2>
+            <p class="text-muted mb-0">Monitor live status, estimated resolution deadlines, and download reports</p>
+        </div>
+        <a href="/complaint" class="btn btn-primary fw-semibold">+ File New Complaint</a>
+    </div>
+
+    {% if complaints and complaints|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date & Time</th>
+                        <th>Department</th>
+                        <th>Category</th>
+                        <th>Area & Pincode</th>
+                        <th>Status</th>
+                        <th>Resolution Target</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    {% set d_info = get_deadline_info(complaint) %}
+                    <tr class="{% if d_info.is_overdue %}table-danger-subtle{% endif %}">
+                        <td class="fw-bold">#{{ complaint.id }}</td>
+                        <td>{{ complaint.date_created.strftime('%d-%m-%Y %I:%M %p') if complaint.date_created else 'N/A' }}</td>
+                        <td><span class="badge bg-secondary">{{ complaint.department }}</span></td>
+                        <td>{{ complaint.complaint_category }}</td>
+                        <td>
+                            {{ complaint.area or 'N/A' }}
+                            {% if complaint.pincode %}
+                                <span class="badge text-bg-light border ms-1">{{ complaint.pincode }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if complaint.status == 'Resolved' %}
+                                <span class="badge bg-success">Resolved</span>
+                            {% elif complaint.status == 'In Progress' %}
+                                <span class="badge bg-primary">In Progress</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+
+                            {% if complaint.is_escalated %}
+                                <span class="badge bg-danger ms-1" title="Escalated for supervisor review">Escalated</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {{ d_info.badge_class }}">{{ d_info.label }}</span>
+                            {% if complaint.current_estimated_date %}
+                                <div class="small text-muted">{{ complaint.current_estimated_date.strftime('%d-%m-%Y') }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-3">
+                            <a href="/complaint/{{ complaint.id }}" class="btn btn-outline-primary btn-sm me-1">
+                                View Details
+                            </a>
+                            <a href="/complaint/{{ complaint.id }}/report" class="btn btn-outline-secondary btn-sm" title="Printable Report / PDF">
+                                📄 Report
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card p-5 text-center shadow-sm">
+            <h4 class="text-muted">No complaints filed yet</h4>
+            <p class="text-muted">You have not registered any civic complaints. Click below to file one now.</p>
+            <div>
+                <a href="/complaint" class="btn btn-primary">File a Complaint</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock body %}

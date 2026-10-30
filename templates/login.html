@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="d-flex justify-content-center mt-5">
+
+    <div class="card p-4 shadow-sm" style="width: 500px;">
+
+        <h2 class="text-center fw-bold text-decoration-underline mb-4">
+            CITIZEN LOGIN
+        </h2>
+
+        <form action="/login" method="POST">
+
+            <div class="mb-3">
+                <label class="fw-bold">Email</label>
+                <input type="email"
+                       class="form-control"
+                       value="{{ email }}"
+                       name="email"
+                       placeholder="Enter your registered email"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">Password</label>
+                <input type="password"
+                       class="form-control"
+                       name="password"
+                       placeholder="Enter your password"
+                       required>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit"
+                        class="btn w-100 fw-bold text-white"
+                        style="background-color: orange;">
+                    LOGIN
+                </button>
+            </div>
+
+            <div class="mt-3">
+                <a href="/signup"
+                   class="btn btn-dark w-100 fw-bold">
+                    CREATE NEW ACCOUNT
+                </a>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="/gov_login" class="text-muted small">Are you a government employee? Login to Government Portal</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock body %}

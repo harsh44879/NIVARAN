@@ -1,0 +1,107 @@
+{% extends 'gov_base.html' %}
+
+{% block body %}
+<div class="container py-5" style="max-width: 600px;">
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4 p-md-5">
+
+            <h2 class="text-center mb-2 fw-bold">Government Employee Signup</h2>
+            <p class="text-center text-muted mb-4">
+                Register for the NIVARAN Government Portal
+            </p>
+
+            <div class="alert alert-warning py-2 small mb-4">
+                <strong>Academic Prototype Notice:</strong> This registration is for college demonstration and project simulation purposes.
+            </div>
+
+            <form method="POST" action="/gov_signup">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Full Name</label>
+                    <input
+                        type="text"
+                        name="emp_name"
+                        class="form-control"
+                        placeholder="Enter your full name"
+                        required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Employee Email</label>
+                    <input
+                        type="email"
+                        name="emp_email"
+                        class="form-control"
+                        placeholder="Enter your official email"
+                        required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <input
+                        type="password"
+                        name="emp_password"
+                        class="form-control"
+                        placeholder="Create a password (min 8 characters)"
+                        minlength="8"
+                        required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Department</label>
+                    <select name="emp_dprtmnt"
+                            id="emp_dprtmnt"
+                            class="form-select"
+                            required>
+                        <option value="" selected disabled>
+                            Select department
+                        </option>
+                        <option value="Water Department">
+                            Water Department
+                        </option>
+                        <option value="Electricity Department">
+                            Electricity Department
+                        </option>
+                        <option value="Road Department">
+                            Road Department
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Office Service Area Pincode</label>
+                    <input
+                        type="text"
+                        name="pincode"
+                        class="form-control"
+                        placeholder="Enter 6-digit office pincode (e.g. 401209)"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        inputmode="numeric"
+                        required>
+                    <div class="form-text">
+                        Complaints for this department and pincode will be routed to your dashboard.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    Create Account
+                </button>
+
+            </form>
+
+            <p class="text-center mt-4 mb-0 text-muted">
+                Already registered?
+                <a href="/gov_login" class="text-decoration-none fw-semibold">Login here</a>
+            </p>
+
+            <div class="text-center mt-3">
+                <a href="/login" class="text-secondary small">Looking for Citizen Portal? Click here</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock body %}

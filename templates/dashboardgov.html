@@ -1,0 +1,163 @@
+{% extends 'gov_base.html' %}
+
+{% block body %}
+
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Government Portal Dashboard</h2>
+            <p class="text-muted mb-0">
+                Officer: <strong>{{ session.get('emp_name') }}</strong> | Department: <span class="badge bg-secondary fs-6">{{ session.get('emp_department') }}</span> | Assigned Service Area Pincode: <span class="badge bg-primary fs-6">{{ session.get('emp_pincode') }}</span>
+            </p>
+        </div>
+        <div>
+            <a href="/gov-notices" class="btn btn-outline-dark btn-sm fw-semibold me-1">📢 Manage Area Notices</a>
+            <a href="/gov-notices/create" class="btn btn-primary btn-sm fw-semibold">+ New Notice</a>
+        </div>
+    </div>
+
+    <!-- Complaint Statistics Cards (6 Metrics) -->
+    <div class="row g-3 my-2">
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 bg-light h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-muted text-uppercase fw-semibold small mb-1">Total</h6>
+                    <h3 class="fw-bold mb-0 text-dark">{{ total }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 border-start border-warning border-4 h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-warning text-uppercase fw-semibold small mb-1">Pending</h6>
+                    <h3 class="fw-bold mb-0 text-dark">{{ pending }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 border-start border-primary border-4 h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-primary text-uppercase fw-semibold small mb-1">In Progress</h6>
+                    <h3 class="fw-bold mb-0 text-dark">{{ in_progress }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 border-start border-success border-4 h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-success text-uppercase fw-semibold small mb-1">Resolved</h6>
+                    <h3 class="fw-bold mb-0 text-dark">{{ resolved }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 border-start border-danger border-4 bg-danger-subtle bg-opacity-25 h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-danger text-uppercase fw-semibold small mb-1">Overdue</h6>
+                    <h3 class="fw-bold mb-0 text-danger">{{ overdue_count or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="card shadow-sm border-0 border-start border-danger border-4 h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-danger text-uppercase fw-semibold small mb-1">Escalated</h6>
+                    <h3 class="fw-bold mb-0 text-dark">{{ escalated_count or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaints Table -->
+    <div class="card shadow-sm border mt-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Service Area Grievances (Pincode: {{ session.get('emp_pincode') }})</h5>
+            <small class="text-muted">Showing {{ complaints|length }} complaints</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Category</th>
+                            <th>Area & Pincode</th>
+                            <th>Field Worker</th>
+                            <th>Target Deadline</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        {% set d_info = get_deadline_info(complaint) %}
+                        <tr class="{% if d_info.is_overdue %}table-danger-subtle{% endif %}">
+                            <td class="ps-3 fw-bold">#{{ complaint.id }}</td>
+                            <td>
+                                <strong>{{ complaint.complaint_category }}</strong>
+                                <div class="small text-muted text-truncate" style="max-width: 180px;">{{ complaint.description }}</div>
+                            </td>
+                            <td>
+                                {{ complaint.area }}
+                                <span class="badge text-bg-light border ms-1">{{ complaint.pincode }}</span>
+                            </td>
+                            <td>
+                                {% if complaint.assigned_worker_id and worker_map and complaint.assigned_worker_id in worker_map %}
+                                    <span class="badge bg-warning text-dark">
+                                        👷 {{ worker_map[complaint.assigned_worker_id] }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small"><em>Unassigned</em></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ d_info.badge_class }}">{{ d_info.label }}</span>
+                                {% if complaint.current_estimated_date %}
+                                    <div class="small text-muted">{{ complaint.current_estimated_date.strftime('%d-%m-%Y') }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if complaint.status == 'Resolved' %}
+                                    <span class="badge bg-success">Resolved</span>
+                                {% elif complaint.status == 'In Progress' %}
+                                    <span class="badge bg-primary">In Progress</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% endif %}
+
+                                {% if complaint.is_escalated %}
+                                    <span class="badge bg-danger ms-1" title="Escalated to Supervisor">Escalated</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="/gov-complaint/{{ complaint.id }}" class="btn btn-outline-primary btn-sm me-1">
+                                    Review & Manage
+                                </a>
+                                <a href="/complaint/{{ complaint.id }}/report" class="btn btn-outline-secondary btn-sm" title="Printable Report / PDF">
+                                    📄
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <h6>No complaints found matching your department and service area.</h6>
+                                <p class="small mb-0">Complaints matching <strong>{{ session.get('emp_department') }}</strong> and pincode <strong>{{ session.get('emp_pincode') }}</strong> will appear here.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock body %}

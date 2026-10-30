@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NIVARAN - Official Complaint Report #{{ complaint.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+            font-size: 14px;
+        }
+        .report-sheet {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 40px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.08);
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+        .report-header {
+            border-bottom: 3px double #0d6efd;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .report-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0d6efd;
+            letter-spacing: 0.5px;
+        }
+        .section-heading {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #495057;
+            border-bottom: 1px solid #ced4da;
+            padding-bottom: 4px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .table-data th {
+            width: 30%;
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .photo-box {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            background: #fdfdfd;
+        }
+        .photo-box img {
+            max-height: 220px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        @media print {
+            body {
+                background: #ffffff;
+                font-size: 12px;
+            }
+            .report-sheet {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            a {
+                text-decoration: none;
+                color: #212529;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Action Bar for Screen View -->
+    <div class="container py-3 no-print" style="max-width: 900px;">
+        <div class="d-flex justify-content-between align-items-center bg-white p-3 border rounded shadow-sm">
+            <div>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">← Back</a>
+                <span class="ms-3 text-muted small">Report Preview Mode</span>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary btn-sm fw-semibold">
+                    🖨️ Print / Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-sheet">
+        <!-- Header -->
+        <div class="report-header d-flex justify-content-between align-items-center">
+            <div>
+                <div class="report-title">🏛️ NIVARAN CIVIC PORTAL</div>
+                <div class="text-muted small">Civic Complaint Management & Grievance Redressal System</div>
+                <div class="fw-bold mt-1 text-dark">OFFICIAL COMPLAINT STATUS & AUDIT REPORT</div>
+            </div>
+            <div class="text-end small">
+                <div><strong>Report Ref:</strong> NIV-{{ complaint.id }}-{{ generated_at.strftime('%Y%m%d') }}</div>
+                <div><strong>Generated:</strong> {{ generated_at.strftime('%d-%m-%Y %I:%M %p') }}</div>
+                <div><strong>Access Role:</strong> {{ user_role|title }}</div>
+            </div>
+        </div>
+
+        <!-- Overdue Banner (if applicable) -->
+        {% if deadline_info.is_overdue %}
+            <div class="alert alert-danger py-2 px-3 mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>⚠️ OVERDUE CIVIC COMPLAINT:</strong> This grievance has exceeded its target resolution deadline by <strong>{{ deadline_info.days_diff|abs }} days</strong> and is flagged for expedited municipal action.
+                </div>
+                <span class="badge bg-danger fs-6">OVERDUE</span>
+            </div>
+        {% elif complaint.is_escalated %}
+            <div class="alert alert-warning py-2 px-3 mb-4">
+                <strong>🚨 SUPERVISOR REVIEW ACTIVE:</strong> This complaint has been escalated to senior departmental review due to extended pending duration.
+            </div>
+        {% endif %}
+
+        <!-- Section 1: Core Complaint Information -->
+        <div class="section-heading">1. Grievance Identification & Classification</div>
+        <table class="table table-bordered table-sm table-data">
+            <tbody>
+                <tr>
+                    <th>Complaint Tracking ID</th>
+                    <td><strong class="text-primary fs-6">#{{ complaint.id }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Department Responsible</th>
+                    <td><span class="badge bg-dark">{{ complaint.department }}</span></td>
+                </tr>
+                <tr>
+                    <th>Complaint Category</th>
+                    <td><strong>{{ complaint.complaint_category }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Current Status</th>
+                    <td>
+                        {% if complaint.status == 'Resolved' %}
+                            <span class="badge bg-success">RESOLVED</span>
+                        {% elif complaint.status == 'In Progress' %}
+                            <span class="badge bg-primary">IN PROGRESS</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">PENDING</span>
+                        {% endif %}
+                        {% if deadline_info.is_overdue %}
+                            <span class="badge bg-danger ms-1">OVERDUE</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Registration Timestamp</th>
+                    <td>{{ complaint.date_created.strftime('%d-%m-%Y at %I:%M %p') if complaint.date_created else 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Citizen Reported Description</th>
+                    <td style="white-space: pre-wrap;">{{ complaint.description }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section 2: Location & Jurisdiction -->
+        <div class="section-heading">2. Location & Area Jurisdiction</div>
+        <table class="table table-bordered table-sm table-data">
+            <tbody>
+                <tr>
+                    <th>Location Pincode</th>
+                    <td><strong class="badge text-bg-light border fs-6">{{ complaint.pincode }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Area / Locality</th>
+                    <td>{{ complaint.area }}</td>
+                </tr>
+                <tr>
+                    <th>Landmark</th>
+                    <td>{{ complaint.landmark }}</td>
+                </tr>
+                <tr>
+                    <th>Detailed Address</th>
+                    <td>{{ complaint.address }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section 3: Administrative Responsibility & Assignment -->
+        <div class="section-heading">3. Departmental Personnel & Assignment</div>
+        <table class="table table-bordered table-sm table-data">
+            <tbody>
+                <tr>
+                    <th>Responsible Officer</th>
+                    <td>
+                        {% if assigned_officer %}
+                            <strong>{{ assigned_officer.emp_name }}</strong> (Emp ID: #{{ assigned_officer.emp_id }} | Email: {{ assigned_officer.emp_email }})
+                        {% else %}
+                            <span class="text-muted">Assigned to {{ complaint.department }} Desk (Pincode {{ complaint.pincode }})</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Assigned Field Technician</th>
+                    <td>
+                        {% if assigned_worker %}
+                            <strong>{{ assigned_worker.worker_name }}</strong> (Worker ID: #{{ assigned_worker.worker_id }} | Phone/Email: {{ assigned_worker.worker_email }})
+                            {% if complaint.assigned_at %}
+                                <div class="small text-muted">Assigned on: {{ complaint.assigned_at.strftime('%d-%m-%Y %I:%M %p') }}</div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Awaiting field technician dispatch</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section 4: Resolution Deadlines & Delay History -->
+        <div class="section-heading">4. Target Resolution Deadlines & Delay Records</div>
+        <table class="table table-bordered table-sm table-data mb-3">
+            <tbody>
+                <tr>
+                    <th>Original Target Resolution Date</th>
+                    <td>
+                        {% if complaint.original_estimated_date %}
+                            <strong>{{ complaint.original_estimated_date.strftime('%d-%m-%Y') }}</strong>
+                        {% else %}
+                            <span class="text-muted">Not yet estimated</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Current Resolution Target</th>
+                    <td>
+                        {% if complaint.current_estimated_date %}
+                            <strong>{{ complaint.current_estimated_date.strftime('%d-%m-%Y') }}</strong>
+                            <span class="badge {{ deadline_info.badge_class }} ms-2">{{ deadline_info.label }}</span>
+                        {% else %}
+                            <span class="text-muted">Not yet estimated</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if delays and delays|length > 0 %}
+            <div class="mb-3">
+                <div class="fw-bold small text-muted mb-2">OFFICIAL DELAY & DEADLINE REVISION LOG:</div>
+                <table class="table table-bordered table-sm table-hover" style="font-size: 13px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Update Date</th>
+                            <th>Previous Target</th>
+                            <th>Revised Target</th>
+                            <th>Reason for Delay</th>
+                            <th>Authorized Officer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in delays %}
+                            <tr>
+                                <td>{{ d.created_at.strftime('%d-%m-%Y %I:%M %p') if d.created_at else 'N/A' }}</td>
+                                <td>{{ d.previous_estimated_date.strftime('%d-%m-%Y') if d.previous_estimated_date else 'N/A' }}</td>
+                                <td><strong class="text-primary">{{ d.revised_estimated_date.strftime('%d-%m-%Y') }}</strong></td>
+                                <td style="white-space: pre-wrap;">{{ d.delay_reason }}</td>
+                                <td>{{ d.officer_name or 'N/A' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <!-- Section 5: Lifecycle Progression Timeline -->
+        <div class="section-heading">5. Grievance Redressal Audit Timeline</div>
+        <table class="table table-bordered table-sm table-data">
+            <tbody>
+                <tr>
+                    <th>Grievance Registered</th>
+                    <td>{{ complaint.date_created.strftime('%d-%m-%Y at %I:%M %p') if complaint.date_created else 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Officer Assignment</th>
+                    <td>{{ complaint.assigned_at.strftime('%d-%m-%Y at %I:%M %p') if complaint.assigned_at else 'Logged upon registration' }}</td>
+                </tr>
+                <tr>
+                    <th>Field Work Started</th>
+                    <td>
+                        {% if complaint.worker_started_at %}
+                            {{ complaint.worker_started_at.strftime('%d-%m-%Y at %I:%M %p') }}
+                        {% elif complaint.resolved_at or complaint.status == 'Resolved' %}
+                            <span class="text-muted">Not recorded (Direct resolution)</span>
+                        {% else %}
+                            <span class="text-muted">Awaiting field start</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Work Completed & Verified</th>
+                    <td>
+                        {% if complaint.resolved_at %}
+                            <strong class="text-success">{{ complaint.resolved_at.strftime('%d-%m-%Y at %I:%M %p') }}</strong>
+                        {% elif complaint.status == 'Resolved' %}
+                            <span class="text-success">Resolved</span>
+                        {% else %}
+                            <span class="text-muted">Pending completion</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section 6: Photo Proof & Evidence -->
+        <div class="section-heading">6. Photographic Evidence & Completion Verification</div>
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="photo-box">
+                    <div class="fw-bold small text-muted mb-2">BEFORE REPAIR (Reported by Citizen)</div>
+                    {% if complaint.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + complaint.image) }}" alt="Before Repair Evidence">
+                    {% else %}
+                        <div class="p-4 text-muted small">No photo evidence attached at registration.</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="photo-box">
+                    <div class="fw-bold small text-muted mb-2">AFTER REPAIR (Uploaded by Field Worker)</div>
+                    {% if complaint.after_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + complaint.after_image) }}" alt="After Repair Proof">
+                    {% else %}
+                        <div class="p-4 text-muted small">After-repair photo evidence pending completion.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if complaint.resolution_notes %}
+            <div class="p-3 bg-light rounded border mb-4">
+                <strong class="text-success d-block small mb-1 text-uppercase">Worker's Completion Report:</strong>
+                <div style="white-space: pre-wrap; font-family: inherit;">{{ complaint.resolution_notes }}</div>
+            </div>
+        {% endif %}
+
+        <!-- Footer / Legal Disclaimer -->
+        <div class="border-top pt-3 mt-4 text-muted small text-center">
+            <p class="mb-1"><strong>NIVARAN Civic Redressal Portal</strong> | Academic Prototype Demonstration & Evaluation System</p>
+            <p class="mb-0">This document reflects recorded administrative events and status logs in the NIVARAN database as of the generation timestamp. For official municipal inquiries, contact the respective Department Service Office for Pincode {{ complaint.pincode }}.</p>
+        </div>
+    </div>
+
+</body>
+</html>

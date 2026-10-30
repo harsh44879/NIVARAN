@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-decoration-underline mb-1">📢 Area Civic Notices & Public Alerts</h2>
+            <p class="text-muted mb-0">Official municipal announcements, maintenance schedules, and public notices</p>
+        </div>
+        <div class="mt-2 mt-md-0">
+            <span class="badge text-bg-light border p-2">
+                Your Residential Area: <strong>{{ session.get('pincode') or 'Not logged in' }}</strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- Pincode Filter Bar -->
+    <div class="card p-3 mb-4 bg-light shadow-sm border">
+        <form method="GET" action="/notices" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label for="pincode" class="col-form-label fw-semibold">Filter by Pincode:</label>
+            </div>
+            <div class="col-auto">
+                <input type="text" id="pincode" name="pincode" class="form-control form-control-sm"
+                       pattern="[0-9]{6}" maxlength="6" inputmode="numeric"
+                       value="{{ current_pincode or '' }}" placeholder="6-digit pincode">
+            </div>
+            <div class="col-auto">
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">All Departments</option>
+                    <option value="Water Department" {% if current_dept == 'Water Department' %}selected{% endif %}>Water Department</option>
+                    <option value="Electricity Department" {% if current_dept == 'Electricity Department' %}selected{% endif %}>Electricity Department</option>
+                    <option value="Road Department" {% if current_dept == 'Road Department' %}selected{% endif %}>Road Department</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">Filter Notices</button>
+                {% if current_pincode or current_dept %}
+                    <a href="/notices" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                {% endif %}
+            </div>
+            <div class="col text-end text-muted small">
+                Showing notices for: <strong>{{ current_pincode if current_pincode else 'All Service Areas' }}</strong>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notices Listing -->
+    {% if notices and notices|length > 0 %}
+        <div class="row g-4">
+            {% for notice in notices %}
+                {% set effective_status = notice.get_effective_status() %}
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm border {% if effective_status == 'active' %}border-warning border-2{% endif %}">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-secondary me-1">{{ notice.department }}</span>
+                                <span class="badge text-bg-light border">Pin: {{ notice.pincode }}</span>
+                                {% if notice.affected_locality %}
+                                    <span class="badge text-bg-light border">{{ notice.affected_locality }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if effective_status == 'active' %}
+                                    <span class="badge bg-danger animate-pulse">ACTIVE ALERT</span>
+                                {% elif effective_status == 'upcoming' %}
+                                    <span class="badge bg-info text-dark">UPCOMING</span>
+                                {% elif effective_status == 'expired' %}
+                                    <span class="badge bg-secondary">EXPIRED</span>
+                                {% else %}
+                                    <span class="badge bg-dark">{{ effective_status|upper }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <h5 class="card-title fw-bold text-dark mb-2">{{ notice.title }}</h5>
+                            <p class="card-text text-secondary mb-3" style="white-space: pre-wrap;">{{ notice.description }}</p>
+
+                            {% if notice.scheduled_start or notice.scheduled_end %}
+                                <div class="p-2 rounded bg-light border mb-3 small">
+                                    <strong class="text-dark d-block">Scheduled Window:</strong>
+                                    {% if notice.scheduled_start %}
+                                        <span>From: {{ notice.scheduled_start.strftime('%d-%m-%Y at %I:%M %p') }}</span><br>
+                                    {% endif %}
+                                    {% if notice.scheduled_end %}
+                                        <span>To: {{ notice.scheduled_end.strftime('%d-%m-%Y at %I:%M %p') }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer bg-light py-2 text-muted small d-flex justify-content-between">
+                            <span>Published: {{ notice.created_at.strftime('%d-%m-%Y') if notice.created_at else 'N/A' }}</span>
+                            <span>Officer: {{ notice.created_by_emp_name or 'Municipal Authority' }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card p-5 text-center shadow-sm">
+            <h4 class="text-muted">No public notices found</h4>
+            <p class="text-muted mb-0">
+                {% if current_pincode %}
+                    There are currently no active civic announcements or maintenance alerts for pincode <strong>{{ current_pincode }}</strong>.
+                {% else %}
+                    No notices have been published matching the selected criteria.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock body %}
