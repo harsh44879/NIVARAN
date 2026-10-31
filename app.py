@@ -15,8 +15,21 @@ from datetime import datetime, date, timedelta
 from functools import wraps
 from pathlib import Path
 import os
+import re
+import secrets
+
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+
 load_dotenv()
+
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 import re
 import secrets
 
@@ -70,6 +83,22 @@ db = SQLAlchemy(app)
 
 UPLOAD_FOLDER = Path(app.root_path) / "static" / "uploads"
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+def get_image_url(image_ref):
+    if not image_ref:
+        return None
+
+    # New Cloudinary images
+    if image_ref.startswith("nivaran/"):
+        return cloudinary.utils.cloudinary_url(
+            image_ref,
+            secure=True
+        )[0]
+
+    # Existing local images
+    return url_for("static", filename=f"uploads/{image_ref}")
+
+
+app.jinja_env.globals["image_url"] = get_image_url
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
@@ -258,14 +287,34 @@ def allowed_image(filename):
 def save_uploaded_image(upload, owner_prefix):
     if not upload or not upload.filename:
         return None
+
     if not allowed_image(upload.filename):
-        raise ValueError("Invalid file format. Please upload a PNG, JPG, JPEG, or WEBP image.")
+        raise ValueError(
+            "Invalid file format. Please upload a PNG, JPG, JPEG, or WEBP image."
+        )
+
     safe_name = secure_filename(upload.filename)
+
     if not safe_name:
         raise ValueError("The image filename is invalid.")
+
     unique_name = f"{owner_prefix}_{secrets.token_hex(8)}_{safe_name}"
-    upload.save(UPLOAD_FOLDER / unique_name)
-    return unique_name
+
+    try:
+        result = cloudinary.uploader.upload(
+            upload,
+            public_id=f"nivaran/{unique_name.rsplit('.', 1)[0]}",
+            resource_type="image",
+            overwrite=False
+        )
+
+        return result["public_id"]
+
+    except Exception as exc:
+        app.logger.exception("Cloudinary image upload failed")
+        raise ValueError(
+            "Image upload failed. Please try again."
+        ) from exc
 
 
 def is_valid_pincode(pincode):

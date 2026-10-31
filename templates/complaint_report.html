@@ -47,18 +47,24 @@
             font-weight: 600;
             color: #495057;
         }
-        .photo-box {
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 8px;
-            text-align: center;
-            background: #fdfdfd;
-        }
-        .photo-box img {
-            max-height: 220px;
-            max-width: 100%;
-            object-fit: contain;
-        }
+       .photo-box {
+                    border: 1px solid #ced4da;
+                    border-radius: 6px;
+                    padding: 12px;
+                    text-align: center;
+                    background: #fdfdfd;
+                    min-height: 280px;
+                }
+
+         .photo-box img {
+                 display: block;
+                 max-height: 240px;
+                 max-width: 100%;
+                 width: auto;
+                    height: auto;
+                 object-fit: contain;
+                 margin: 10px auto;
+                }
         @media print {
             body {
                 background: #ffffff;
@@ -324,7 +330,7 @@
                 <div class="photo-box">
                     <div class="fw-bold small text-muted mb-2">BEFORE REPAIR (Reported by Citizen)</div>
                     {% if complaint.image %}
-                        <img src="{{ url_for('static', filename='uploads/' + complaint.image) }}" alt="Before Repair Evidence">
+                        <img src="{{ image_url(complaint.image) }}" alt="Before Repair Evidence">
                     {% else %}
                         <div class="p-4 text-muted small">No photo evidence attached at registration.</div>
                     {% endif %}
@@ -334,7 +340,7 @@
                 <div class="photo-box">
                     <div class="fw-bold small text-muted mb-2">AFTER REPAIR (Uploaded by Field Worker)</div>
                     {% if complaint.after_image %}
-                        <img src="{{ url_for('static', filename='uploads/' + complaint.after_image) }}" alt="After Repair Proof">
+                        <img src="{{image_url(complaint.after_image) }}" alt="After Repair Proof">
                     {% else %}
                         <div class="p-4 text-muted small">After-repair photo evidence pending completion.</div>
                     {% endif %}

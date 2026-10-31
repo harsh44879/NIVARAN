@@ -100,7 +100,7 @@
                         </div>
                         <div class="card-body text-center p-2">
                             {% if task.image %}
-                                <img src="{{ url_for('static', filename='uploads/' + task.image) }}" alt="Before Repair Evidence" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+                                <img src="{{ image_url(task.image) }}" alt="Before Repair Evidence" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
                             {% else %}
                                 <div class="p-4 text-muted small">No photo evidence attached with the initial complaint.</div>
                             {% endif %}
@@ -115,7 +115,7 @@
                         </div>
                         <div class="card-body text-center p-2">
                             {% if task.after_image %}
-                                <img src="{{ url_for('static', filename='uploads/' + task.after_image) }}" alt="After Repair Proof" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+                                <img src="{{ image_url(task.after_image) }}" alt="After Repair Proof" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
                             {% else %}
                                 <div class="p-4 text-muted small">After-repair photo will appear here once uploaded upon work completion.</div>
                             {% endif %}
