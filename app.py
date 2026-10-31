@@ -1086,13 +1086,23 @@ def assign_field_worker(id):
         return redirect(url_for("gov_dashboard"))
 
     worker_id = request.form.get("worker_id")
+        
     if not worker_id:
-        flash("Please select a field worker.")
-        return redirect(url_for("gov_complaint_details", id=id))
+            flash("Please select a field worker.")
+            return redirect(url_for("gov_complaint_details", id=id))
+        
+    try:
+        worker_id = int(worker_id)
+    except ValueError:
+            flash("Invalid field worker selected.")
+            return redirect(url_for("gov_complaint_details", id=id))
 
     worker = FieldWorker.query.filter_by(
-        worker_id=worker_id, worker_dprtmnt=department, pincode=pincode, is_active=True
-    ).first()
+            worker_id=worker_id,
+            worker_dprtmnt=department,
+            pincode=pincode,
+            is_active=True
+        ).first()
 
     if not worker:
         flash("Selected worker does not belong to your department and service area.")
